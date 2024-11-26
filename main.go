@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
@@ -31,18 +32,17 @@ func (us *URLShortener) HandleShorten(w http.ResponseWriter, r *http.Request) {
 	// Construct the full shortened URL
 	shortenedURL := fmt.Sprintf("http://localhost:5555/short/%s", shortKey)
 
-	// Render the HTML response with the shortened URL
-	w.Header().Set("Content-Type", "text/html")
-	responseHTML := fmt.Sprintf(`
-        <h2>URL Shortener</h2>
-        <p>Original URL: %s</p>
-        <p>Shortened URL: <a href="%s">%s</a></p>
-        <form method="post" action="/shorten">
-            <input type="text" name="url" placeholder="Enter a URL">
-            <input type="submit" value="Shorten">
-        </form>
-    `, originalURL, shortenedURL, shortenedURL)
-	fmt.Fprint(w, responseHTML)
+	resp := map[string]string{
+		"original_url":  originalURL,
+		"shortened_url": shortenedURL,
+	}
+	respJson, err := json.Marshal(resp)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(respJson)
 }
 
 func (us *URLShortener) HandleRedirect(w http.ResponseWriter, r *http.Request) {
